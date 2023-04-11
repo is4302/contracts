@@ -63,18 +63,18 @@ contract PrescriptionVerification {
     function addPrescription(address patientAddress, bytes32 prescriptionHash) public onlyDoctor(msg.sender) {
         medicalRecords[nonce] = Prescription(msg.sender, patientAddress, prescriptionHash, false);
         doctorRecords[msg.sender].push(nonce);
+        patientRecords[patientAddress].push(nonce);
         emit PrescriptionAdded(nonce, msg.sender, patientAddress);
         nonce += 1;
     }
 
     // Approve an existing prescription
     function approvePrescription(address patientAddress, uint256 _nonce) public onlyPatient(patientAddress) {
-        Prescription storage prescription = medicalRecords[nonce];
+        Prescription storage prescription = medicalRecords[_nonce];
         require(prescription.doctor != address(0), "Prescription does not exist for patient");
         require(prescription.patient == msg.sender, "You are not the patient of this prescription");
         require(prescription.approved == false, "This prescription has been approved already.");
         prescription.approved = true;
-        patientRecords[patientAddress].push(_nonce);
         emit PrescriptionApproved(_nonce, patientAddress);
     }
 
@@ -82,5 +82,64 @@ contract PrescriptionVerification {
     function getPrescription(uint256 _nonce) public view returns (bytes32, bool) {
         Prescription storage prescription = medicalRecords[_nonce];
         return (prescription.prescriptionHash, prescription.approved);
+    }
+
+    // Getter functions for medical records
+    function getPrescriptionDoctor(uint256 _nonce) public view returns (address) {
+        Prescription storage prescription = medicalRecords[_nonce];
+        return prescription.doctor;
+    }
+
+    function getPrescriptionPatient(uint256 _nonce) public view returns (address) {
+        Prescription storage prescription = medicalRecords[_nonce];
+        return prescription.patient;
+    }
+
+    function getPrescriptionHash(uint256 _nonce) public view returns (bytes32) {
+        Prescription storage prescription = medicalRecords[_nonce];
+        return prescription.prescriptionHash;
+    }
+
+    function isPrescriptionApproved(uint256 _nonce) public view returns (bool) {
+        Prescription storage prescription = medicalRecords[_nonce];
+        return prescription.approved;
+    }
+
+    // Getter functions for doctor and patient records
+    function getDoctorRecord(address doctorAddress, uint256 index) public view returns (uint256) {
+        require(isDoctor[doctorAddress], "Doctor is not registered");
+        return doctorRecords[doctorAddress][index];
+    }
+
+    function getPatientRecord(address patientAddress, uint256 index) public view returns (uint256) {
+        return patientRecords[patientAddress][index];
+    }
+
+    function getDoctorRecordCount(address doctorAddress) public view returns (uint256) {
+        require(isDoctor[doctorAddress], "Doctor is not registered");
+        return doctorRecords[doctorAddress].length;
+    }
+
+    function getPatientRecordCount(address patientAddress) public view returns (uint256) {
+        return patientRecords[patientAddress].length;
+    }
+
+    // Getter functions for patients and doctors arrays
+    function getPatient(uint256 index) public view returns (address) {
+        require(index < patients.length, "Index out of range");
+        return patients[index];
+    }
+
+    function getDoctor(uint256 index) public view returns (address) {
+        require(index < doctors.length, "Index out of range");
+        return doctors[index];
+    }
+
+    function getPatientCount() public view returns (uint256) {
+        return patients.length;
+    }
+
+    function getDoctorCount() public view returns (uint256) {
+        return doctors.length;
     }
 }
