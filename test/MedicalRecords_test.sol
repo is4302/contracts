@@ -68,6 +68,7 @@ contract PrescriptionVerification {
         medicalRecords[nonce] = Prescription(msg.sender, patientAddress, prescriptionHash, false);
         doctorRecords[msg.sender].push(nonce);
         patientRecords[patientAddress].push(nonce);
+        hashToNonce[prescriptionHash] = nonce;
         emit PrescriptionAdded(nonce, msg.sender, patientAddress);
         nonce += 1;
     }

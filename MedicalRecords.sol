@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.0;
 
 contract PrescriptionVerification {
     address[] public patients; // List of patients
     address[] public doctors; // List of doctors
     mapping (address => bool) isDoctor;
+    mapping (address => bool) isPatient;
     mapping (address => uint256[]) doctorRecords; // Records of prescriptions created by each doctor
     mapping (address => uint256[]) patientRecords; // Records of prescriptions approved by each patient
     mapping (uint256 => Prescription) private medicalRecords; // All prescription records
     address owner;
-    uint256 nonce = 0;
+    uint256 nonce = 1;
+    mapping (bytes32 => uint256) private hashToNonce; // Map prescription hash to its nonce
+
 
     // Events
     event PatientAdded(address patient);
@@ -45,15 +47,18 @@ contract PrescriptionVerification {
     }
 
     // Add a new patient
-    function addPatient(address patientAddress) public onlyOwner {
+    function addPatient(address patientAddress) public {
         require(patientAddress != address(0), "Invalid patient address");
+        require(isPatient[patientAddress] == false, "Patient was already registeated");
         patients.push(patientAddress);
         emit PatientAdded(patientAddress);
     }
 
     // Add a new doctor
-    function addDoctor(address doctorAddress) public onlyOwner {
+    function addDoctor(address doctorAddress) public {
         require(doctorAddress != address(0), "Invalid doctor address");
+        require(isDoctor[doctorAddress] == false, "Doctor was already registeated");
+        require(msg.sender == owner, "Only owner can add doctors")
         doctors.push(doctorAddress);
         isDoctor[doctorAddress] = true;
         emit DoctorAdded(doctorAddress);
@@ -64,6 +69,7 @@ contract PrescriptionVerification {
         medicalRecords[nonce] = Prescription(msg.sender, patientAddress, prescriptionHash, false);
         doctorRecords[msg.sender].push(nonce);
         patientRecords[patientAddress].push(nonce);
+        hashToNonce[prescriptionHash] = nonce;
         emit PrescriptionAdded(nonce, msg.sender, patientAddress);
         nonce += 1;
     }
@@ -142,4 +148,40 @@ contract PrescriptionVerification {
     function getDoctorCount() public view returns (uint256) {
         return doctors.length;
     }
+
+    function isDoctorRegistrated(address doctorAddress) public view returns (bool) {
+        return isDoctor[doctorAddress];
+    }
+
+    function isPatientRegistrated(address doctorAddress) public view returns (bool) {
+        return isPatient[doctorAddress];
+    }
+
+    // Get the number of patients
+    function getNumberOfPatients() public view returns (uint256) {
+        return patients.length;
+    }
+
+    // Get the number of doctors
+    function getNumberOfDoctors() public view returns (uint256) {
+        return doctors.length;
+    }
+
+    // Get the list of medical records for a doctor
+    function getDoctorMedicalRecords(address doctorAddress) public view returns (uint256[] memory) {
+        return doctorRecords[doctorAddress];
+    }
+
+    // Get the list of medical records for a patient
+    function getPatientMedicalRecords(address patientAddress) public view returns (uint256[] memory) {
+        return patientRecords[patientAddress];
+    }
+
+    // Get nonce by prescription hash
+    function getNonceByHash(bytes32 prescriptionHash) public view returns (uint256) {
+        uint256 _nonce = hashToNonce[prescriptionHash];
+        require(_nonce != 0 || medicalRecords[0].prescriptionHash == prescriptionHash, "Prescription hash not found");
+        return _nonce;
+    }
+
 }
