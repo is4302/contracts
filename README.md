@@ -29,22 +29,30 @@ To get started with this project, follow these steps:
 
 3. Install dependencies:
 
-``npm install``
+```
+npm install
+```
 
 
 4. Compile the smart contract:
 
-``truffle compile``
+```
+truffle compile
+```
 
 
 5. Deploy the smart contract to a local development network:
 
-``truffle develop``
+```
+truffle develop
+```
 
 
 6. Run tests:
 
-``truffle test``
+```
+truffle test
+```
 
 
 ## Smart Contract Overview
