@@ -46,18 +46,23 @@ contract PrescriptionVerification {
         owner = msg.sender;
     }
 
+
+
     // Add a new patient
     function addPatient(address patientAddress) public {
         require(patientAddress != address(0), "Invalid patient address");
-        require(isPatient[patientAddress] == false, "Patient was already registeated");
+        require(isPatient[patientAddress] == false, "Patient was already registered");
         patients.push(patientAddress);
+        isPatient[patientAddress] = true; // Add this line to update the isPatient mapping
         emit PatientAdded(patientAddress);
     }
+
 
     // Add a new doctor
     function addDoctor(address doctorAddress) public {
         require(doctorAddress != address(0), "Invalid doctor address");
         require(isDoctor[doctorAddress] == false, "Doctor was already registeated");
+        require(msg.sender == owner, "Only owner can add doctors");
         doctors.push(doctorAddress);
         isDoctor[doctorAddress] = true;
         emit DoctorAdded(doctorAddress);
@@ -81,6 +86,11 @@ contract PrescriptionVerification {
         require(prescription.approved == false, "This prescription has been approved already.");
         prescription.approved = true;
         emit PrescriptionApproved(_nonce, patientAddress);
+    }
+
+
+    function getOwner() public view returns (address) {
+        return owner;
     }
 
     // Get a prescription by nonce
